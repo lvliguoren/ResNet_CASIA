@@ -36,7 +36,7 @@ test_loader = Data.DataLoader(
 )
 
 model = torchvision.models.resnet18(pretrained=False, num_classes=3755)
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 loss_func = torch.nn.CrossEntropyLoss()
 
 def train(train_x, train_y):
@@ -52,29 +52,32 @@ def train(train_x, train_y):
     # 转为2维才能和同样是2维的top5对比
     y_resize = train_y.view(-1, 1)
     _, top5 = torch.topk(outputs, 5, 1)
-    accuracy = torch.eq(top5, y_resize).sum().float().mean()
+    correct = torch.eq(top5, y_resize).sum().item()
+    total = train_y.size(0)
 
-    return loss.item(), accuracy.item()
+    return loss.item(), correct / total
 
 @torch.no_grad()
 def test():
     model.eval()
 
-    accuracy = 0.0
+    correct = 0.0
+    total = 0.0
     for test_x, test_y in test_loader:
         test_outputs = model(test_x)
         y_resize = test_y.view(-1, 1)
         _, top5 = torch.topk(test_outputs, 5, 1)
-        accuracy = torch.eq(top5, y_resize).sum().float().mean()
+        correct += torch.eq(top5, y_resize).sum().item()
+        total += test_y.size(0)
         # 只取第一个batch作为测试，避免耗时过长
         break
-    return accuracy.item()
+    return correct / total
 
 with SummaryWriter() as writer:
     for step, (batch_x, batch_y) in enumerate(train_loader):
         train_loss, train_accuracy = train(batch_x, batch_y)
 
-        if step % 10 == 0:
+        if step % 50 == 0:
             test_accuracy = test()
             print('step:{},train_loss:{},train_accuracy:{},test_accuracy:{}'.format(step,train_loss,train_accuracy,test_accuracy))
 
