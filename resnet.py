@@ -35,7 +35,9 @@ test_loader = Data.DataLoader(
     batch_size = 500,
 )
 
-model = torchvision.models.resnet18(pretrained=False, num_classes=3755)
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = torchvision.models.resnet18(pretrained=False, num_classes=3755).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 loss_func = torch.nn.CrossEntropyLoss()
 
@@ -64,6 +66,8 @@ def test():
     correct = 0.0
     total = 0.0
     for test_x, test_y in test_loader:
+        test_x = test_x.to(device)
+        test_y = test_y.to(device)
         test_outputs = model(test_x)
         y_resize = test_y.view(-1, 1)
         _, top5 = torch.topk(test_outputs, 5, 1)
@@ -75,6 +79,8 @@ def test():
 
 with SummaryWriter() as writer:
     for step, (batch_x, batch_y) in enumerate(train_loader):
+        batch_x = batch_x.to(device)
+        batch_y = batch_y.to(device)
         train_loss, train_accuracy = train(batch_x, batch_y)
 
         if step % 50 == 0:

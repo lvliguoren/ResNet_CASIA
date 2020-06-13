@@ -202,3 +202,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+.idea/ResNet_CASIA.iml
+.idea/inspectionProfiles/
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+model.pth
